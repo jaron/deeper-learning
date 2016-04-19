@@ -5,8 +5,8 @@ import os
 
 # configure these parameters
 base_url = 'http://api.zoopla.co.uk/api/v1/property_listings.js'
-data_limit = 10
-page_size = 5
+data_limit = 200
+page_size = 10
 
 # geographical parameters
 
@@ -18,6 +18,8 @@ nearest_station = (52.051, 1.144)
 params = {
     "api_key" : "jj7k6du6z3bamad4jket3ny3",
     "area" : area,
+    "include_sold" : "1",
+    "listing_status" : "sale",
     "page_size" : page_size
 }
 
@@ -53,17 +55,24 @@ def number_of_garages(description):
 
 def number_of_bathrooms(description, listing):
     num_bathrooms = max(1, int(listing.get("num_bathrooms")))
-
     if ("two bathroom" in description):
         num_bathrooms = 2
     if ("three bathroom" in description):
         num_bathrooms = 3
-
     return num_bathrooms
 
-def get_type(type):
-    if ("Detached" in type): return "Detached"
-    return str(type)
+
+def get_type(type, description):
+    if "bungalow" in type.lower() or "bungalow" in description: return "Bungalow"
+    if "semi-detached" in type.lower(): return "Semi"
+    if "detached" in type.lower(): return "Detached"
+    if "town house" in type.lower(): return "Detached"
+    if "terrace" in type.lower(): return "Terraced"
+    if "mobile" in type.lower(): return "Mobile"
+    if "apartment" in description: return "Flat"
+
+    print "Unable to determine type: ", type, " - ", description
+    return "Unknown"
 
 
 def extract_details(listing):
@@ -72,13 +81,18 @@ def extract_details(listing):
     # as the estimator assumes a natural ordering between values
 
     description = listing.get("short_description").lower() + " " + listing.get("description").lower()
+    price = int(listing.get("price"))
+
+    # remove properties without a price, or miscategorised rental properties
+    if price < 10000:
+        return False
 
     results = []
-    results.append(int(listing.get("price")))
+    results.append(price)
     results.append(int(listing.get("num_bedrooms")))
     results.append(number_of_bathrooms(description, listing))
     results.append(number_of_garages(description))
-    results.append(get_type(listing.get("property_type")))
+    results.append(get_type(listing.get("property_type"), description))
 
     # add distance to transport hub, and locations
     location = (float(listing.get("latitude")), float(listing.get("longitude")))
@@ -118,7 +132,11 @@ def get_details(page_number, counter=0):
     buffer = []
     listings = data.get("listing")
     for i in range(len(listings)):
-        buffer.append(extract_details(listings[i]))
+        row = extract_details(listings[i])
+        if not row:
+            print "Skipped entry ", i
+        else:
+            buffer.append(row)
 
     write_to_csv(buffer)
 
@@ -145,7 +163,7 @@ def main():
     while need_more_data:
         page_number += 1
         num_available, counter = get_details(page_number, counter)
-        need_more_data = num_available > 0 and counter < data_limit
+        need_more_data = num_available > 0 and counter < num_available and counter < data_limit
         print ("Fetched {0} records".format(counter))
 
 
