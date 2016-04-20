@@ -3,43 +3,44 @@
 import numpy as np
 import pandas as pd
 from sklearn import cross_validation
-from sklearn.metrics import mean_squared_error, make_scorer
+from sklearn.metrics import mean_squared_error, r2_score, make_scorer
 from sklearn import grid_search
 from sklearn.tree import DecisionTreeRegressor
 import visualise
+import regressors
 
 
 def info(details, prices):
-    # Number of houses in the dataset
+    # Number of properties in the dataset
     total_houses = len(details)
 
     # Number of features in the dataset
     total_features = details.shape[1]
 
-    # Minimum housing value in the dataset
+    # Minimum property value in the dataset
     minimum_price = np.min(prices)
 
-    # Maximum housing value in the dataset
+    # Maximum property value in the dataset
     maximum_price = np.max(prices)
 
-    # Mean house value of the dataset
+    # Mean property value of the dataset
     mean_price = np.mean(prices)
 
-    # Median house value of the dataset
+    # Median property value of the dataset
     median_price = np.median(prices)
 
-    # Standard deviation of housing values of the dataset
+    # Standard deviation of property prices
     std_dev = np.std(prices)
 
     # Show the calculated statistics
     print "\n*** Dataset stats ***"
-    print "Total num of properties :\t", total_houses
-    print "Total num of features   :\t", total_features
-    print "Minimum house price     :\t£", minimum_price
-    print "Maximum house price     :\t£", maximum_price
-    print "Mean house price        :\t£ {0:.2f}".format(mean_price)
-    print "Median house price      :\t£ {0:.2f}".format(median_price)
-    print "Std Dev of house price  :\t£ {0:.2f}".format(std_dev)
+    print "Total num of properties    :\t", total_houses
+    print "Total num of features      :\t", total_features
+    print "Minimum property price     :\t£", minimum_price
+    print "Maximum property price     :\t£", maximum_price
+    print "Mean property price        :\t£ {0:.2f}".format(mean_price)
+    print "Median property price      :\t£ {0:.2f}".format(median_price)
+    print "Std Dev of property price  :\t£ {0:.2f}".format(std_dev)
 
 
 # Shows some sample data so we can inspect it
@@ -69,85 +70,80 @@ def preprocess_features(X):
     return outX
 
 
-def fit_model(X, y):
-    """ Tunes a decision tree regressor model using GridSearchCV on the input data X
-        and target labels y and returns this optimal model. """
+# Generate predictions using the supplied regressor
+def show_predictions(best, X_train, X_test, y_train, y_test):
 
-    # Create a decision tree regressor object
-    regressor = DecisionTreeRegressor()
+    print "\n-----", type(best).__name__, " Results -----"
+    print "Best parameters:", best.get_params()
+    predictions = best.predict(X_test)
+    test_predictions = best.predict(X_train)
 
-    # Set up the parameters we wish to tune
-    parameters = {'max_depth':(1,2,3,4,5,6,7,8,9,10)}
+    # Calculate performance on the training set
+    training_r2 = r2_score(y_train, test_predictions)
 
-    # Make an appropriate scoring function
-    scoring_function = make_scorer(mean_squared_error, greater_is_better=False)
+    # Calculate performance on the testing set
+    test_r2 = r2_score(y_test, predictions)
 
-    # Make the GridSearchCV object
-    reg = grid_search.GridSearchCV(regressor, parameters, scoring_function)
+    print type(best).__name__, "Training R2 score = ", training_r2, "\n"
 
-    # Fit the learner to the data to obtain the optimal model with tuned parameters
-    reg.fit(X, y)
+    # display some sample predictions and the corresponding real values
+    for i in range(min(10, len(predictions))):
+        diff =  float(predictions[i] - y_test.iloc[i]) / float(y_test.iloc[i]) * 100
+        print "Is: ", y_test.iloc[i], "\t-[predicted]-> {0:.0f} \t({1:.1f} %)".format(predictions[i], diff)
 
-    # Return the optimal model
-    return reg.best_estimator_
+    print "\n>>", type(best).__name__, "Test Set R2 score = ", test_r2
+
+    print "\n- - - - - - - - - - - - -\n"
 
 
 def main():
-    filename = "../data/IP5-properties.csv"
-    property_data = pd.read_csv(filename)
+    # change the line below to load an alternative data set (see the ../data directory)
+    data_file = "../data/E14-properties.csv"
+    print "Loading: ", data_file
+    property_data = pd.read_csv(data_file)
+
+    # if you want to exclude the categorical property type field, uncomment this
+    # property_data = property_data.drop('Type', 1)
+
     print "Dataset has been loaded with {0} rows".format(len(property_data))
 
     feature_cols = list(property_data.columns[1:])  # all columns but first are features
-    target_col = property_data.columns[0]  # first column is the target/label
+    target_col = property_data.columns[0]           # first column is property price
     print "Feature column(s):-\n{}".format(feature_cols)
     print "Target column: {}".format(target_col)
 
-    X_all = property_data[feature_cols]  # feature values for all students
-    y_all = property_data[target_col]  # corresponding targets/labels
+    X_all = property_data[feature_cols]  # feature values
+    y_all = property_data[target_col]    # corresponding prices
 
+    # now update any categorical fields so all are continuous
     X_all = preprocess_features(X_all)
 
     show_data(X_all, y_all)
     info(X_all,  y_all)
 
-    # Note: Shuffle the data or randomly select samples to avoid any bias due to ordering in the dataset
+    # Shuffle the data or randomly select samples to avoid any bias due to ordering in the dataset
     X_train, X_test, y_train, y_test = cross_validation.train_test_split(X_all, y_all, test_size=0.3)
 
-    print "Training set: {} samples".format(X_train.shape[0])
+    print "\nTraining set: {} samples".format(X_train.shape[0])
     print "Test set: {} samples".format(X_test.shape[0])
 
-    # Fine-tune with full training set
-    best = fit_model(X_train, y_train)
-    print best.get_params()
-    predictions = best.predict(X_test)
+    # create and evaluate several different regressors
+    best = regressors.fit_model_decision_tree(X_train, y_train)
+    show_predictions(best, X_train, X_test, y_train, y_test)
 
-    # Find the performance on the training set
-    training_error = mean_squared_error(y_train, best.predict(X_train))
+    best = regressors.fit_model_svm(X_train, y_train)
+    show_predictions(best, X_train, X_test, y_train, y_test)
 
-    # Find the performance on the testing set
-    test_error = mean_squared_error(y_test, best.predict(X_test))
-
-    print "Training Error = ", training_error, "\n"
-    print "Test Set Error = ", test_error, "\n"
-
-    #print "Test Data:\n", y_test
-    #print "Predictions shape: ", predictions.shape
-
-    for i in range(len(predictions)):
-        print y_test.iloc[i], " ->", predictions[i]
-
-    #print "Actually: ", y_test.iloc[0]
-    #print "Predicted: ", predictions[0]
+    best = regressors.fit_model_knn(X_train, y_train)
+    show_predictions(best, X_train, X_test, y_train, y_test)
 
 
-
-    # print "Predicted value of client's home: {0:.2f} -> real value {0:.2f}".format(sale_price, y_test[0])
-
-    try:
-        visualise.plot_curves(X_train, y_train, X_test, y_test)
-        visualise.model_complexity(X_train, y_train, X_test, y_test)
-    except Exception,e:
-        print str(e)
-        print "Something went wrong when displaying graphs"
+    # visualisations don't seem to run from the console, but do work in Spyder
+    #try:
+    #    visualise.plot_curves(X_train, y_train, X_test, y_test)
+    #    visualise.model_complexity(X_train, y_train, X_test, y_test)
+    #except Exception,e:
+    #    print str(e)
+    #    print "Something went wrong when displaying graphs"
 
 main()
