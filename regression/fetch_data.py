@@ -5,21 +5,23 @@ import os
 
 # configure these parameters
 base_url = 'http://api.zoopla.co.uk/api/v1/property_listings.js'
-data_limit = 200
-page_size = 10
+data_limit = 2000
+page_size = 50
 
 # geographical parameters
 
 # the postcode of interest
-area = "IP5"
+area = "E14"
 # the location of this postcode's nearest mainline train station, (latitude, longitude)
-nearest_station = (52.051, 1.144)
+nearest_station = (51.503, -0.0186) # (52.051, 1.144)
 
 params = {
     "api_key" : "jj7k6du6z3bamad4jket3ny3",
     "area" : area,
     "include_sold" : "1",
     "listing_status" : "sale",
+    "minimum_beds" : 1,
+    "minimum_price" : 100000,
     "page_size" : page_size
 }
 
@@ -63,13 +65,13 @@ def number_of_bathrooms(description, listing):
 
 
 def get_type(type, description):
-    if "bungalow" in type.lower() or "bungalow" in description: return "Bungalow"
-    if "semi-detached" in type.lower(): return "Semi"
-    if "detached" in type.lower(): return "Detached"
-    if "town house" in type.lower(): return "Detached"
+    if "bungalow" in type.lower() or "bungalow" in description or "cottage" in description: return "Bungalow"
+    if "semi-detached" in type.lower() or "end terrace" in description or "end of terrace" in description: return "Semi"
+    if "detached" in type.lower() or "detached property" in description or "detached family home" in description: return "Detached"
+    if "town house" in type.lower()  or "town house" in description or "townhouse" in description or "farmhouse" in description: return "Detached"
     if "terrace" in type.lower(): return "Terraced"
     if "mobile" in type.lower(): return "Mobile"
-    if "apartment" in description: return "Flat"
+    if "apartment" in description or "maisonette" in description or "floor flat" in description: return "Flat"
 
     print "Unable to determine type: ", type, " - ", description
     return "Unknown"
@@ -82,14 +84,15 @@ def extract_details(listing):
 
     description = listing.get("short_description").lower() + " " + listing.get("description").lower()
     price = int(listing.get("price"))
+    bedrooms = int(listing.get("num_bedrooms"))
 
-    # remove properties without a price, or miscategorised rental properties
-    if price < 10000:
+    # remove properties below 100,000 (mostly shared ownership or plots)
+    if price < 100000 or bedrooms == 0:
         return False
 
     results = []
     results.append(price)
-    results.append(int(listing.get("num_bedrooms")))
+    results.append(bedrooms)
     results.append(number_of_bathrooms(description, listing))
     results.append(number_of_garages(description))
     results.append(get_type(listing.get("property_type"), description))
@@ -151,8 +154,9 @@ def main():
     page_number = 0
 
     filename = get_filename()
-    print "Deleting file:", filename
-    os.remove(filename)
+    if os.path.exists(filename):
+        print "Deleting file:", filename
+        os.remove(filename)
 
     header = ["Price","Bedrooms","Bathrooms","Garages","Type","Latitude","Longitude","Remoteness"]
     with open(filename, 'a') as csvfile:
