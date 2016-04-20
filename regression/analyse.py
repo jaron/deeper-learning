@@ -3,9 +3,7 @@
 import numpy as np
 import pandas as pd
 from sklearn import cross_validation
-from sklearn.metrics import mean_squared_error, r2_score, make_scorer
-from sklearn import grid_search
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import r2_score
 import visualise
 import regressors
 
@@ -136,7 +134,6 @@ def main():
 
     best = regressors.fit_model_knn(X_train, y_train)
     show_predictions(best, X_train, X_test, y_train, y_test)
-
 
     # visualisations don't seem to run from the console, but do work in Spyder
     #try:
