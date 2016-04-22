@@ -5,12 +5,25 @@ from sklearn import cross_validation
 from sklearn import svm
 from sklearn.neighbors import KNeighborsClassifier
 
+from sklearn.cross_validation import cross_val_score
+from sklearn.ensemble import AdaBoostClassifier
 
 
+def fit_model_adaboost(dtc, X, y):
+    # Create an Adaboost classifier using a decision tree estimator
+    parameters = {"base_estimator__criterion" : ["entropy"],
+                  "base_estimator__splitter" :   ["best", "random"],
+                  "n_estimators": [50, 100, 150]
+                 }
+
+    classifier = AdaBoostClassifier(base_estimator = dtc)
+    gs = grid_search.GridSearchCV(classifier, param_grid=parameters)
+    gs.fit(X, y)
+    return gs.best_estimator_
 
 
 def fit_model_knn(X, y):
-    # Fit the best combination of parameters
+    # Create a K-nearest classifier with best combination of parameters
     classifier = KNeighborsClassifier()
 
     # Set up the parameters we wish to tune

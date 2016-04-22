@@ -79,8 +79,8 @@ def main():
     print "Test set: {} samples".format(X_test.shape[0])
 
     # try Decision Tree classifier
-    best = classifiers.fit_model_decision_tree(X_train, y_train)
-    show_predictions(best, X_train, X_test, y_train, y_test)
+    best_dtc = classifiers.fit_model_decision_tree(X_train, y_train)
+    show_predictions(best_dtc, X_train, X_test, y_train, y_test)
 
     # try SVM classifier
     best = classifiers.fit_model_svm(X_train, y_train)
@@ -89,5 +89,10 @@ def main():
     # try KNN classifier
     best = classifiers.fit_model_knn(X_train, y_train)
     show_predictions(best, X_train, X_test, y_train, y_test)
+
+    # try Adaboost with the decision tree classifier
+    boosted = classifiers.fit_model_adaboost(best_dtc, X_train, y_train)
+    show_predictions(boosted, X_train, X_test, y_train, y_test)
+
 
 main()
