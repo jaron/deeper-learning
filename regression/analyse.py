@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn import cross_validation
 from sklearn.metrics import r2_score
+import statsmodels.formula.api as smf
 import visualise
 import regressors
 
@@ -48,6 +49,10 @@ def show_data(X_all, y_all):
     print X_all.head()
     print "\nTop 5 Prices..."
     print y_all.head()
+
+    model = smf.OLS(y_all, X_all) # (formula='Price ~ Bedrooms + Bathrooms + Remoteness + Garages + C(Type)', )
+    res = model.fit()
+    print res.summary()
 
 # Preprocess feature columns to ensure all are continuous values
 def preprocess_features(X):
@@ -135,10 +140,12 @@ def main():
     best = regressors.fit_model_knn(X_train, y_train)
     show_predictions(best, X_train, X_test, y_train, y_test)
 
+
     # visualisations don't seem to run from the console, but do work in Spyder
     #try:
-    #    visualise.plot_curves(X_train, y_train, X_test, y_test)
-    #    visualise.model_complexity(X_train, y_train, X_test, y_test)
+        # visualise.plot_learning_curve(best, "Learning Curves", X_train, y_train, n_jobs=4).show()
+        # visualise.plot_curves(X_train, y_train, X_test, y_test)
+        # visualise.model_complexity(X_train, y_train, X_test, y_test)
     #except Exception,e:
     #    print str(e)
     #    print "Something went wrong when displaying graphs"
