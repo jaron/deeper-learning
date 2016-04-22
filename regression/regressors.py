@@ -3,7 +3,19 @@ from sklearn import svm
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn import grid_search
 from sklearn.metrics import mean_squared_error, r2_score, make_scorer
+from sklearn.ensemble import AdaBoostRegressor
 
+
+def fit_model_adaboost(dt, X, y):
+    # Create an Adaboost regressor using a decision tree estimator
+    parameters = {"learning_rate" : [0.5, 1, 2],
+                  "n_estimators": [50, 100, 150]
+                 }
+
+    classifier = AdaBoostRegressor(base_estimator = dt)
+    gs = grid_search.GridSearchCV(classifier, param_grid=parameters)
+    gs.fit(X, y)
+    return gs.best_estimator_
 
 
 def fit_model_decision_tree(X, y):

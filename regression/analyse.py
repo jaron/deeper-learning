@@ -50,9 +50,11 @@ def show_data(X_all, y_all):
     print "\nTop 5 Prices..."
     print y_all.head()
 
-    model = smf.OLS(y_all, X_all) # (formula='Price ~ Bedrooms + Bathrooms + Remoteness + Garages + C(Type)', )
+    model = smf.OLS(y_all, X_all)
     res = model.fit()
+    # small p-values indicate values of significance
     print res.summary()
+
 
 # Preprocess feature columns to ensure all are continuous values
 def preprocess_features(X):
@@ -131,14 +133,18 @@ def main():
     print "Test set: {} samples".format(X_test.shape[0])
 
     # create and evaluate several different regressors
-    best = regressors.fit_model_decision_tree(X_train, y_train)
-    show_predictions(best, X_train, X_test, y_train, y_test)
+    best_dt = regressors.fit_model_decision_tree(X_train, y_train)
+    show_predictions(best_dt, X_train, X_test, y_train, y_test)
 
     best = regressors.fit_model_svm(X_train, y_train)
     show_predictions(best, X_train, X_test, y_train, y_test)
 
     best = regressors.fit_model_knn(X_train, y_train)
     show_predictions(best, X_train, X_test, y_train, y_test)
+
+    # try Adaboost with the best decision tree
+    boosted = regressors.fit_model_adaboost(best_dt, X_train, y_train)
+    show_predictions(boosted, X_train, X_test, y_train, y_test)
 
 
     # visualisations don't seem to run from the console, but do work in Spyder
