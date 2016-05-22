@@ -24,4 +24,9 @@ __Classification__
 * to run these, ```cd classification``` then ```python classify.py```
 
 
+__Clustering__
+
+* this example uses unsupervised learning techniques to analyse and extract information from the property data without relying on hand-coded annotations
+
+
 More to come...
