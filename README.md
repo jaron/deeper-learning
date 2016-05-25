@@ -24,9 +24,13 @@ __Classification__
 * to run these, ```cd classification``` then ```python classify.py```
 
 
-__Clustering__
+__Unsupervised__
 
-* this example uses unsupervised learning techniques to analyse and extract information from the property data without relying on hand-coded annotations
+* this example uses unsupervised learning techniques, like Principal Component Analysis and K-means clustering to analyse the property data without relying on hand-coded annotations
+* there are two examples in the ```unsupervised``` directory
+* run ```python analyse_locations.py``` to analyse a set of properties by their size and location, as the location is the dominant factor in determining property price, you'll notice the principal components are based around the Remoteness attribute, and this influences the clusters created
+* run ```python analyse_property_type.py``` to omit the geographical features and consider property features alone, this will result in components and clusters that are associated with the number of rooms in the properties
+
 
 
 More to come...
