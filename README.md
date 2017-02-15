@@ -35,7 +35,8 @@ __Unsupervised__
 __Numpy-NN__
 
 * this implements a simple neural network in just numpy to demonstrate how to solve a regression problem, in this case predicting bike hire numbers. 
-* this is a Jupyter notebook, so you can run it and experiment in your browser
+* also included is simple sentiment analysis using a numpy-based network, demonstrating how to distinguish between signal and noise, and visualise what's going on under the hood 
+* these are Jupyter notebooks, so they can run be and experimented with in a browser
 
 
 More to come...
