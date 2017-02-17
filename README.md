@@ -39,4 +39,8 @@ __Numpy-NN__
 * these are Jupyter notebooks, so they can run be and experimented with in a browser
 
 
+__TFLearn__
+
+* examples using TFLearn to simplify building models for sentiment analysis and MNIST classification
+
 More to come...
